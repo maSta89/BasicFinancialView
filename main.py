@@ -10,7 +10,7 @@ print(data.head())
 
 closing_prices = data["Close"]
 
-#graph block
+# graph block
 
 plt.figure(figsize=(15,5))
 plt.plot(closing_prices, label="Closing prices")
