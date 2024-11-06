@@ -1,6 +1,7 @@
 #import all necessary library
 import yfinance as yf
 import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
 
 # Get the data from online source here
 ticker_symbol = "KO"
@@ -19,3 +20,9 @@ plt.xlabel("Date")
 plt.ylabel("Prices")
 plt.legend()
 plt.show()
+
+prediction_model = ARIMA(closing_prices, order=(1, 1, 1))
+prediction_result = prediction_model.fit()
+
+
+
