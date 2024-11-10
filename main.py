@@ -26,3 +26,8 @@ plt.ylabel("Stock Price")
 plt.title("Stock Price Forecast with ARIMA")
 plt.legend()
 plt.show()
+
+# raw monthly data
+resampled_data = data['Close'].resample('2D').first()  # every other day data
+
+resampled_data.to_csv("COLA_raw_data.csv")
