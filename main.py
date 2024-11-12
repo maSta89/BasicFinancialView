@@ -8,7 +8,10 @@ from statsmodels.tsa.arima.model import ARIMA
 ticker_symbol = "KO"
 data = yf.download(ticker_symbol, start="2022-01-01", end="2024-01-01", interval="1d")
 data = data.asfreq('D')
-data['Close'] = data['Close'].ffill()  # missing dates added to ensure daily frequency
+#print(data.columns)
+data[['Open', 'Close']] = data[['Open', 'Close']].ffill()  # missing values added to ensure daily frequency
+#print(data)
+
 
 # prediction block
 time_series = data['Close'] # base data
@@ -16,6 +19,12 @@ prediction_model = ARIMA(time_series, order=(1, 1, 1)).fit()
 forecast_steps = 10 # number of predictions
 forecast = prediction_model.forecast(steps=forecast_steps)
 forecast_index = pd.date_range(start=time_series.index[-1] + pd.Timedelta(days=1), periods=forecast_steps, freq='D')
+
+# split data into separate files
+data = data.reset_index()
+data['Date'] = data['Date'].dt.date
+data[['Date', 'Open']].to_excel("CocaCola_Open_Prices.xlsx", sheet_name="Open Prices")
+data[['Date', 'Close']].to_csv("CocaCola_Close_Prices.csv", index=False)
 
 # graph block
 plt.figure(figsize=(12, 6))
@@ -27,7 +36,3 @@ plt.title("Stock Price Forecast with ARIMA")
 plt.legend()
 plt.show()
 
-# raw monthly data
-resampled_data = data['Close'].resample('2D').first()  # every other day data
-
-resampled_data.to_csv("COLA_raw_data.csv")
