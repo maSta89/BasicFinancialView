@@ -1,4 +1,4 @@
-#import all necessary library
+# import all necessary library
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -8,15 +8,15 @@ from statsmodels.tsa.arima.model import ARIMA
 ticker_symbol = "KO"
 data = yf.download(ticker_symbol, start="2022-01-01", end="2024-01-01", interval="1d")
 data = data.asfreq('D')
-#print(data.columns)
+# print(data.columns)
 data[['Open', 'Close']] = data[['Open', 'Close']].ffill()  # missing values added to ensure daily frequency
-#print(data)
+# print(data)
 
 
 # prediction block
-time_series = data['Close'] # base data
+time_series = data['Close']  # base data
 prediction_model = ARIMA(time_series, order=(1, 1, 1)).fit()
-forecast_steps = 10 # number of predictions
+forecast_steps = 10  # number of predictions
 forecast = prediction_model.forecast(steps=forecast_steps)
 forecast_index = pd.date_range(start=time_series.index[-1] + pd.Timedelta(days=1), periods=forecast_steps, freq='D')
 
