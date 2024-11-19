@@ -34,7 +34,6 @@ def get_last_date(file_path, date_col):
 
 
 last_date = get_last_date(open_price_file, "Date")
-
 if last_date is None:
     start_date = "2022-01-01"  # Default start date if no data exists
 else:
@@ -42,22 +41,17 @@ else:
 
 end_date = datetime.now().strftime("%Y-%m-%d")  # Today's date as the end date
 
-# Step 3: Download the data from Yahoo Finance
+# download the data from Yahoo Finance
+
 data = yf.download(ticker_symbol, start=start_date, end=end_date, interval="1d")
+
 data = data.asfreq('D')
 data[['Open', 'Close']] = data[['Open', 'Close']].ffill()  # Fill missing values
-
-
-last_date = get_last_date(open_price_file, "Date")
-if last_date is None:
-    start_date = "2022-01-01"
-else:
-    start_date = (last_date + timedelta(days=1)).strftime("%Y-%m-%d")
-
-
+#print(data)
 # split data into separate files
 new_data = data.reset_index()
-new_data['Date'] = data['Date'].dt.date
+print(new_data)
+new_data['Date'] = pd.to_datetime(data['Date'])
 
 existing_open_data = pd.read_excel(open_price_file, sheet_name="Open Prices")
 combined_open_data = pd.concat([existing_open_data, new_data[["Date", "Open"]]])
