@@ -62,7 +62,10 @@ combined_close_data = pd.concat([existing_close_data, new_data[['Date', 'Close']
 combined_close_data.to_csv(close_price_file, index=False)
 
 # prediction block
-time_series = data['Close']  # base data
+csv_data = pd.read_csv(close_price_file, parse_dates=["Date"])
+csv_data.set_index("Date", inplace=True)
+time_series = csv_data['Close']  # base data
+time_series = time_series.asfreq("B")
 prediction_model = ARIMA(time_series, order=(1, 1, 1)).fit()
 forecast_steps = 10  # number of predictions
 forecast = prediction_model.forecast(steps=forecast_steps)
