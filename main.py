@@ -42,23 +42,20 @@ else:
 end_date = datetime.now().strftime("%Y-%m-%d")  # Today's date as the end date
 
 # download the data from Yahoo Finance
-
 data = yf.download(ticker_symbol, start=start_date, end=end_date, interval="1d")
-
-data = data.asfreq('D')
-data[['Open', 'Close']] = data[['Open', 'Close']].ffill()  # Fill missing values
+data.columns = data.columns.get_level_values(0)
+data = data.dropna(subset=['Open', 'Close'])
 print(data)
-# split data into separate files
 new_data = data.reset_index()
-new_data.columns = new_data.columns.get_level_values(0)
 print(data.columns)
 print(new_data.columns)
 print(new_data)
 new_data['Date'] = pd.to_datetime(new_data['Date']).dt.date
 
+# split data into separate files
 existing_open_data = pd.read_excel(open_price_file, sheet_name="Open Prices")
 combined_open_data = pd.concat([existing_open_data, new_data[["Date", "Open"]]])
-combined_open_data.to_excel("CocaCola_Open_Prices.xlsx", sheet_name="Open Prices")
+combined_open_data.to_excel(open_price_file, sheet_name="Open Prices", index=False)
 
 existing_close_data = pd.read_csv(close_price_file)
 combined_close_data = pd.concat([existing_close_data, new_data[['Date', 'Close']]])
