@@ -7,11 +7,11 @@ import os
 from statsmodels.tsa.arima.model import ARIMA
 from datetime import datetime, timedelta
 
-# Get the data from online source here
 ticker_symbol = "KO"
 open_price_file = "CocaCola_Open_Prices.xlsx"
 close_price_file = "CocaCola_Close_Prices.csv"
 
+#  set up empty files for data
 if not os.path.exists(open_price_file):
     pd.DataFrame(columns=["Date", "Open"]).to_excel(open_price_file, sheet_name="Open Prices", index=False)
 
@@ -19,13 +19,12 @@ if not os.path.exists(close_price_file):
     pd.DataFrame(columns=["Date", "Close"]).to_csv(close_price_file, index=False)
 
 
+# check for last date in file
 def get_last_date(file_path, date_col):
     file_data = None
     if os.path.exists(file_path):
         if file_path.endswith(".xlsx"):
             file_data = pd.read_excel(file_path, sheet_name="Open Prices")
-        elif file_path.endswith(".csv"):
-            file_data = pd.read_csv(file_path)
         # Check if the file is not empty
         if not file_data.empty:
             bottom_date = pd.to_datetime(file_data[date_col].iloc[-1])
@@ -41,24 +40,23 @@ else:
 
 end_date = datetime.now().strftime("%Y-%m-%d")  # Today's date as the end date
 
-# download the data from Yahoo Finance
+# Get the data from online source ,download the data from Yahoo Finance
 data = yf.download(ticker_symbol, start=start_date, end=end_date, interval="1d")
 data.columns = data.columns.get_level_values(0)
 data = data.dropna(subset=['Open', 'Close'])
+data = data.reset_index()
+data['Date'] = pd.to_datetime(data['Date']).dt.date
+
 print(data)
-new_data = data.reset_index()
 print(data.columns)
-print(new_data.columns)
-print(new_data)
-new_data['Date'] = pd.to_datetime(new_data['Date']).dt.date
 
 # split data into separate files
 existing_open_data = pd.read_excel(open_price_file, sheet_name="Open Prices")
-combined_open_data = pd.concat([existing_open_data, new_data[["Date", "Open"]]])
+combined_open_data = pd.concat([existing_open_data, data[["Date", "Open"]]])
 combined_open_data.to_excel(open_price_file, sheet_name="Open Prices", index=False)
 
 existing_close_data = pd.read_csv(close_price_file)
-combined_close_data = pd.concat([existing_close_data, new_data[['Date', 'Close']]])
+combined_close_data = pd.concat([existing_close_data, data[['Date', 'Close']]])
 combined_close_data.to_csv(close_price_file, index=False)
 
 # prediction block
