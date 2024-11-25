@@ -32,13 +32,32 @@ def get_last_date(file_path, date_col):
     return None
 
 
+# User input for time period
+today = datetime.now().strftime("%Y-%m-%d")
+default_start = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+
+print("Enter the start date (YYYY-MM-DD) or press Enter to use default:", default_start)
+start_date = input().strip() or default_start
+
+print("Enter the end date (YYYY-MM-DD) or press Enter to use today's date:", today)
+end_date = input().strip() or today
+
+# Validate date format
+try:
+    datetime.strptime(start_date, "%Y-%m-%d")
+    datetime.strptime(end_date, "%Y-%m-%d")
+except ValueError:
+    raise ValueError("Invalid date format. Please enter dates in YYYY-MM-DD format.")
+
+# Ensure end_date is after start_date
+if start_date > end_date:
+    raise ValueError("Start date must be earlier than end date.")
+
 last_date = get_last_date(open_price_file, "Date")
 if last_date is None:
-    start_date = "2024-10-01"  # Default start date if no data exists
+    start_date = default_start  # Default start date if no data exists
 else:
     start_date = (last_date + timedelta(days=1)).strftime("%Y-%m-%d")  # Start from the day after the last recorded date
-
-end_date = datetime.now().strftime("%Y-%m-%d")  # Today's date as the end date
 
 # Get the data from online source ,download the data from Yahoo Finance
 data = yf.download(ticker_symbol, start=start_date, end=end_date, interval="1d")
