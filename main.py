@@ -7,9 +7,9 @@ import os
 from statsmodels.tsa.arima.model import ARIMA
 from datetime import datetime, timedelta
 
-ticker_symbol = "KO"
-open_price_file = "CocaCola_Open_Prices.xlsx"
-close_price_file = "CocaCola_Close_Prices.csv"
+ticker_symbol = input("Enter ticker symbol like KO for CocaCola").strip().upper()
+open_price_file = f"{ticker_symbol}_Open_Prices.xlsx"
+close_price_file = f"{ticker_symbol}_Close_Prices.csv"
 
 #  set up empty files for data
 if not os.path.exists(open_price_file):
