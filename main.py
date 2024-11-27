@@ -3,6 +3,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import sqlite3
 
 from statsmodels.tsa.arima.model import ARIMA
 from datetime import datetime, timedelta
@@ -68,6 +69,37 @@ data['Date'] = pd.to_datetime(data['Date']).dt.date
 
 print(data)
 print(data.columns)
+
+database_name = f"{ticker_symbol}_stock_data.db"
+connection = sqlite3.connect(database_name)
+cursor = connection.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS stock_prices (
+    id  INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE NOT NULL,
+    open_price REAL,
+    close_price REAL,
+    volume INTEGER
+    )
+""")
+
+connection.commit()
+
+
+def insert_stock_data(rawdata):
+    for _, row in rawdata.iterrows():
+        cursor.execute("""
+        INSERT INTO stock_prices (date, open_price, close_price, volume)
+        VALUES (?, ?, ?, ?)
+        """, (row["Date"], row["Open"], row["Close"], row["Volume"]))
+    connection.commit()
+
+
+insert_stock_data(data)
+
+cursor.close()
+connection.close()
 
 # split data into separate files
 existing_open_data = pd.read_excel(open_price_file, sheet_name="Open Prices")
