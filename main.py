@@ -32,6 +32,43 @@ def initialize_database(database):
     else:
         print(f"DB {database} is ready")
 
+
+def store_yahoo_data(tickersymbol, startdate, enddate):
+    # Get the data from online source ,download the data from Yahoo Finance
+    data = yf.download(tickersymbol, start=startdate, end=enddate, interval="1d")
+    data.columns = data.columns.get_level_values(0)
+    data = data.dropna(subset=['Open', 'Close'])
+    data = data.reset_index()
+    data['Date'] = pd.to_datetime(data['Date']).dt.date
+    print(data)
+    print(data.columns)
+    insert_stock_data(data)
+    return data
+
+
+def insert_stock_data(rawdata):
+    with sqlite3.connect(database_name) as connection:
+        cursor = connection.cursor()
+        for _, row in rawdata.iterrows():
+            cursor.execute("""
+            INSERT INTO stock_prices (date, open_price, close_price, volume)
+            VALUES (?, ?, ?, ?)
+            """, (row["Date"], row["Open"], row["Close"], row["Volume"]))
+        connection.commit()
+
+
+def get_last_date():
+    with sqlite3.connect(database_name) as connection:
+        cursor = connection.cursor()
+        cursor.execute("""
+        SELECT MAX(date) FROM stock_prices
+        """)
+        result = cursor.fetchone()
+        return result[0] if result[0] else None
+
+
+initialize_database(database_name)
+
 # User input for time period
 today = datetime.now().strftime("%Y-%m-%d")
 default_start = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
@@ -53,41 +90,9 @@ except ValueError:
 if start_date > end_date:
     raise ValueError("Start date must be earlier than end date.")
 
-
-# Get the data from online source ,download the data from Yahoo Finance
-data = yf.download(ticker_symbol, start=start_date, end=end_date, interval="1d")
-data.columns = data.columns.get_level_values(0)
-data = data.dropna(subset=['Open', 'Close'])
-data = data.reset_index()
-data['Date'] = pd.to_datetime(data['Date']).dt.date
-
-print(data)
-print(data.columns)
+store_yahoo_data(ticker_symbol, start_date, end_date)
 
 
-
-def insert_stock_data(rawdata):
-    for _, row in rawdata.iterrows():
-        cursor.execute("""
-        INSERT INTO stock_prices (date, open_price, close_price, volume)
-        VALUES (?, ?, ?, ?)
-        """, (row["Date"], row["Open"], row["Close"], row["Volume"]))
-    connection.commit()
-
-
-insert_stock_data(data)
-
-cursor.close()
-connection.close()
-
-# split data into separate files
-existing_open_data = pd.read_excel(open_price_file, sheet_name="Open Prices")
-combined_open_data = pd.concat([existing_open_data, data[["Date", "Open"]]])
-combined_open_data.to_excel(open_price_file, sheet_name="Open Prices", index=False)
-
-existing_close_data = pd.read_csv(close_price_file)
-combined_close_data = pd.concat([existing_close_data, data[['Date', 'Close']]])
-combined_close_data.to_csv(close_price_file, index=False)
 
 # prediction block
 csv_data = pd.read_csv(close_price_file, parse_dates=["Date"])
