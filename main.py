@@ -34,6 +34,29 @@ def initialize_database(database):
 
 
 def store_yahoo_data(tickersymbol, startdate, enddate):
+    connection = sqlite3.connect(database_name)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT date FROM stock_prices ORDER BY date asc
+    """)
+    existing_dates = {datetime.strptime(row[0], "%Y-%m-%d").date() for row in cursor.fetchall()}
+
+    if existing_dates:
+        start_date_obj = startdate
+        end_date_obj = enddate
+
+        missing_start_date = start_date_obj
+        while missing_start_date in existing_dates:
+            missing_start_date += timedelta(days=1)
+
+        if missing_start_date > end_date_obj:
+            print("All data is up to date.")
+            cursor.close()
+            connection.close()
+
+        startdate = missing_start_date
+
     # Get the data from online source ,download the data from Yahoo Finance
     data = yf.download(tickersymbol, start=startdate, end=enddate, interval="1d")
     data.columns = data.columns.get_level_values(0)
