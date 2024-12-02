@@ -1,5 +1,4 @@
 # import all necessary library
-import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
@@ -10,7 +9,6 @@ from datetime import datetime, timedelta
 from database_utils import initialize_database, store_yahoo_data
 
 ticker_symbol = input("Enter ticker symbol like KO for CocaCola").strip().upper()
-
 database_name = f"{ticker_symbol}_stock_data.db"
 
 initialize_database(database_name)
@@ -27,21 +25,25 @@ def get_last_date():
 
 
 # User input for time period
-today = datetime.now().strftime("%Y-%m-%d")
 default_start = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+today = datetime.now().strftime("%Y-%m-%d")
 
-print("Enter the start date (YYYY-MM-DD) or press Enter to use default:", default_start)
-start_date = input().strip() or default_start
 
-print("Enter the end date (YYYY-MM-DD) or press Enter to use today's date:", today)
-end_date = input().strip() or today
+def date_input(message, date):
+    while True:
+        print(f"{message} or press Enter to use default:", date)
+        user_input = input().strip() or date
+        # Validate date format check
+        try:
+            datetime.strptime(user_input, "%Y-%m-%d")
+            return user_input
+        except ValueError:
+            print(f"Invalid date format. {user_input} Please enter the date in YYYY-MM-DD format.")
 
-# Validate date format
-try:
-    datetime.strptime(start_date, "%Y-%m-%d")
-    datetime.strptime(end_date, "%Y-%m-%d")
-except ValueError:
-    raise ValueError("Invalid date format. Please enter dates in YYYY-MM-DD format.")
+
+start_date = date_input("Enter the start date (YYYY-MM-DD)", default_start)
+end_date = date_input("Enter the end date (YYYY-MM-DD)", today)
+
 
 # Ensure end_date is after start_date
 if start_date > end_date:
