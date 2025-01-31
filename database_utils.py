@@ -60,8 +60,6 @@ def get_yahoo_data(tickersymbol, startdate, enddate, database):
     data = data.reset_index()
     data['Date'] = pd.to_datetime(data['Date'])
     data = data.set_index('Date')
-    # data.index = data.index.date
-    # data.index = data.index.map(lambda x: x.date())
 
     print(data.index)
     print(type(data.index[0]))
@@ -77,22 +75,19 @@ def insert_stock_data(database, rawdata):
 
         cursor.execute("""SELECT date FROM stock_prices""")
         existing_dates = {datetime.strptime(row[0], "%Y-%m-%d").date() for row in cursor.fetchall()}
-        # firstitem = next(iter(existing_dates))
-        # print(type(firstitem))
 
-        print(rawdata.index)
-        print("Columns:", rawdata.columns)
+        # print(rawdata.index)
+        # print("Columns:", rawdata.columns)
 
         if not isinstance(rawdata.index, pd.DatetimeIndex):
             raise ValueError("rawdata.index must be a DatetimeIndex for proper date handling.")
 
         rawdata.index = rawdata.index.map(lambda x: x.date())
 
-        print(f"rawdata.index type: {type(rawdata.index)}")
+        # print(f"rawdata.index type: {type(rawdata.index)}")
 
         new_data = rawdata[~rawdata.index.isin(existing_dates)]
         new_data = new_data.sort_index()
-        # print(type(next(iter(rawdata.index))))
 
         for date, row in new_data.iterrows():
             cursor.execute("""

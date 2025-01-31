@@ -1,10 +1,6 @@
 # import all necessary library
-import matplotlib.pyplot as plt
-import pandas as pd
-import os
 import sqlite3
 
-from statsmodels.tsa.arima.model import ARIMA
 from datetime import datetime, timedelta
 from database_utils import initialize_database, store_yahoo_data
 from database_utils import print_table_content
