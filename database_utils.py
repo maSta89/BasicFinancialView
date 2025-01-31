@@ -13,8 +13,7 @@ def initialize_database(database):
             cursor = connection.cursor()
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS stock_prices (
-                id  INTEGER PRIMARY KEY AUTOINCREMENT,
-                date DATE NOT NULL,
+                date DATE PRIMARY KEY,
                 open_price REAL,
                 close_price REAL,
                 volume INTEGER
@@ -57,11 +56,17 @@ def get_yahoo_data(tickersymbol, startdate, enddate, database):
     data = yf.download(tickersymbol, start=startdate, end=enddate, interval="1d")
     data.columns = data.columns.get_level_values(0)
     data = data.dropna(subset=['Open', 'Close'])
-    # data = data.reset_index()
-    # data['Date'] = pd.to_datetime(data['Date']).dt.date
-    data.index = pd.to_datetime(data.index).dt.date
-    print(data)
-    print(data.columns)
+
+    data = data.reset_index()
+    data['Date'] = pd.to_datetime(data['Date'])
+    data = data.set_index('Date')
+    # data.index = data.index.date
+    # data.index = data.index.map(lambda x: x.date())
+
+    print(data.index)
+    print(type(data.index[0]))
+    # print(data.columns)
+
     insert_stock_data(database, data)
     return data
 
@@ -71,9 +76,23 @@ def insert_stock_data(database, rawdata):
         cursor = connection.cursor()
 
         cursor.execute("""SELECT date FROM stock_prices""")
-        existing_dates = {row[0] for row in cursor.fetchall()}
+        existing_dates = {datetime.strptime(row[0], "%Y-%m-%d").date() for row in cursor.fetchall()}
+        # firstitem = next(iter(existing_dates))
+        # print(type(firstitem))
 
-        new_data = rawdata[~rawdata["Date"].isin(existing_dates)]
+        print(rawdata.index)
+        print("Columns:", rawdata.columns)
+
+        if not isinstance(rawdata.index, pd.DatetimeIndex):
+            raise ValueError("rawdata.index must be a DatetimeIndex for proper date handling.")
+
+        rawdata.index = rawdata.index.map(lambda x: x.date())
+
+        print(f"rawdata.index type: {type(rawdata.index)}")
+
+        new_data = rawdata[~rawdata.index.isin(existing_dates)]
+        new_data = new_data.sort_index()
+        # print(type(next(iter(rawdata.index))))
 
         for date, row in new_data.iterrows():
             cursor.execute("""
@@ -81,3 +100,26 @@ def insert_stock_data(database, rawdata):
             VALUES (?, ?, ?, ?)
             """, (date, row["Open"], row["Close"], row["Volume"]))
         connection.commit()
+
+        print(f"this a data inserted in DB {new_data}")
+
+
+def print_table_content(database, table_name):
+    with sqlite3.connect(database) as connection:
+        cursor = connection.cursor()
+
+        # Fetch all rows from the table
+        cursor.execute(f"SELECT * FROM {table_name}")
+        rows = cursor.fetchall()
+
+        # Fetch column names
+        column_names = [description[0] for description in cursor.description]
+
+        # Print column names
+        print(" | ".join(column_names))
+        print("-" * (len(" | ".join(column_names)) + 5))
+
+        # Print each row
+        for row in rows:
+            print(" | ".join(map(str, row)))
+

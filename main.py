@@ -7,6 +7,8 @@ import sqlite3
 from statsmodels.tsa.arima.model import ARIMA
 from datetime import datetime, timedelta
 from database_utils import initialize_database, store_yahoo_data
+from database_utils import print_table_content
+from graph_functions import db_data, visualize_stock_data
 
 ticker_symbol = input("Enter ticker symbol like KO for CocaCola").strip().upper()
 database_name = f"{ticker_symbol}_stock_data.db"
@@ -52,22 +54,13 @@ if start_date > end_date:
 store_yahoo_data(database_name, ticker_symbol, start_date, end_date)
 
 
-# prediction block
-# csv_data = pd.read_csv(close_price_file, parse_dates=["Date"])
-# csv_data.set_index("Date", inplace=True)
-# time_series = csv_data['Close']  # base data
-# time_series = time_series.asfreq("B")
-# prediction_model = ARIMA(time_series, order=(1, 1, 1)).fit()
-# forecast_steps = 10  # number of predictions
-# forecast = prediction_model.forecast(steps=forecast_steps)
-# forecast_index = pd.date_range(start=time_series.index[-1] + pd.Timedelta(days=1), periods=forecast_steps, freq='D')
+data = db_data(database_name)
+visualize_stock_data(data)
 
-# graph block
-# plt.figure(figsize=(12, 6))
-# plt.plot(time_series.index, time_series, label="Original Time Series", color="blue")
-# plt.plot(forecast_index, forecast, label="Forecasted Prices", color="orange", marker='o')
-# plt.xlabel("Date")
-# plt.ylabel("Stock Price")
-# plt.title("Stock Price Forecast with ARIMA")
-# plt.legend()
-# plt.show()
+
+# table_name = "stock_prices"
+# print_table_content(database_name, table_name)
+
+
+
+
