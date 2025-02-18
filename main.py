@@ -1,6 +1,5 @@
 # import all necessary library
 import sqlite3
-
 from datetime import datetime, timedelta
 from database_utils import initialize_database, store_yahoo_data
 from database_utils import print_table_content
